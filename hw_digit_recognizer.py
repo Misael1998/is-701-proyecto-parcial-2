@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from itertools import combinations
 
 class HWDigitRecognizer:
 
@@ -10,18 +11,24 @@ class HWDigitRecognizer:
     Los usará para crear las matrices de X_train, X_test, Y_train y Y_test 
     con las dimensiones adecuadas y normalización de acuerdo a lo definido en clase.
     """
+    comb = combinations([0,1,2,3,4,5,6,7,8,9], 2)
+    self.clasificadores = list(comb)
     trainFile = pd.read_csv(train_filename)
     testFile = pd.read_csv(test_filename)
 
-    y_train = trainFile.label
-    y_test = testFile.label
+    y_train_len = len(trainFile.label)
+    y_test_len = len(testFile.label)
 
-    x_train = trainFile.drop('label', axis=1)
-    x_test = testFile.drop('label', axis=1)
+    y_train = (trainFile.label.to_numpy()).reshape(1, y_train_len)
+    y_test = (testFile.label.to_numpy()).reshape(1, y_test_len)
 
-    print(x_test.shape)
-    print(x_train)
-    
+    x_train = trainFile.drop('label', axis=1).to_numpy().T
+    x_test = testFile.drop('label', axis=1).to_numpy().T
+
+    self.X_train = x_train/255
+    self.X_test = x_test/255
+    self.Y_train = y_train
+    self.Y_test = y_test
 
   def train_model(self):
   # def train_model(self, learn_rate, num_iter):
@@ -65,6 +72,7 @@ class HWDigitRecognizer:
     pero la revisión de la precisión se hará por el docente después de la entrega.
     """
     print('train model')
+    return 'null'
 
   def predict(self, X, params, class_pairs):
     """Retorna un vector de <(1,m)> con las etiquetas predecidas para las instancias en X 
@@ -86,7 +94,7 @@ class HWDigitRecognizer:
 
     Se asume un umbral de 0.5 para la predicción.
     """
-    pass
+    return 'null'
 
   def get_datasets(self):
     """Retorna un diccionario con los datasets preprocesados con los datos y 
@@ -98,10 +106,16 @@ class HWDigitRecognizer:
     "Y_test": Y_test
     }
     """
-    print('get datasets')
+    d = {
+      "X_train": self.X_train,
+      "X_test": self.X_test,
+      "Y_train": self.Y_train,
+      "Y_test": self.Y_test
+    }
+    return d
 
   def get_pairs(self):
     """Retorna una lista con las k(k-1)/2 tuplas que identifican los clasificadores que 
     conforman este modelo, ej.: [(0,1), (0,2) ... (8,9)]
     """
-    print('get pairs')
+    return self.clasificadores
