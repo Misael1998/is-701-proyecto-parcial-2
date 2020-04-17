@@ -71,8 +71,45 @@ class HWDigitRecognizer:
     El autograder validará que este archivo esté presente y tendra las claves correctas, 
     pero la revisión de la precisión se hará por el docente después de la entrega.
     """
-    print('train model')
-    return 'null'
+    # initialize parameters with zeros (≈ 1 line of code)
+    n = self.X_train.shape[0]
+    pairs = np.asarray(self.get_pairs())
+    print(pairs.shape)
+    # print(np.array(self.get_pairs()).shape[0])
+    
+
+    
+
+    for i in range(pairs.shape[0]):
+      w, b = self.initialize_params(n)
+      parameters, grads, costs = None, None, None
+      Y_tmp = self.Y_train[0]
+      for j in range(len(Y_tmp)):
+        if(pairs[i, 0] == Y_tmp[j]):
+          Y_tmp[j] = 0
+        elif(pairs[i, 1] == Y_tmp[j]):
+          Y_tmp[j] = 1
+        else:
+          Y_tmp[j] = np.random.randint(0,1)
+        
+        parameters, grads, costs = self.optimize(w, b, self.X_train, Y_tmp, 1000, 0.5, False)
+      
+      print(parameters)
+      print(i)
+      print('---')
+
+    # Gradient descent (≈ 1 line of code)
+    
+    
+    # Retrieve parameters w and b from dictionary "parameters"
+    w = parameters["w"]
+    b = parameters["b"]
+
+    
+    return((grads, costs))
+    # Predict test/train set examples (≈ 2 lines of code)
+    # Y_prediction_test = predict(w, b, X_test)
+    # Y_prediction_train = predict(w, b, X_train)
 
   def predict(self, X, params, class_pairs):
     """Retorna un vector de <(1,m)> con las etiquetas predecidas para las instancias en X 
@@ -119,3 +156,69 @@ class HWDigitRecognizer:
     conforman este modelo, ej.: [(0,1), (0,2) ... (8,9)]
     """
     return self.clasificadores
+
+  def sigmoid(self, z):
+    s = 1 / (1 + np.exp(-z))
+    return s
+
+  def initialize_params(self,dim):
+    np.random.seed(1)
+    w = np.random.rand(dim,1) * 0.01
+    b = np.random.randint(100) * 0.0001
+
+    assert(w.shape == (dim, 1))
+    assert(isinstance(b, float) or isinstance(b, int))
+    
+    return w, b
+
+  def propagate(self, w, b, X, Y):
+    m = X.shape[1]
+    
+    Z = w.T.dot(X) + b
+    
+    A = self.sigmoid(Z)
+    cost = -1/m * np.sum(Y * np.log(A) + (1 - Y)*np.log(1-A))
+    
+    dZ = A - Y
+    dw = 1/m * X.dot(dZ.T)
+    db = 1/m * np.sum(dZ)
+
+    assert(dw.shape == w.shape)
+    assert(db.dtype == float)
+    cost = np.squeeze(cost)
+    assert(cost.shape == ())
+    
+    grads = {"dw": dw,
+             "db": db}
+    
+    return (grads, cost)
+  
+  def optimize(self, w, b, X, Y, num_iterations, learning_rate, print_cost = False):
+    costs = []
+    
+    for i in range(num_iterations):
+
+      grads, cost = self.propagate(w, b, X, Y)
+
+      dw = grads["dw"]
+      db = grads["db"]
+        
+      w = w - learning_rate * dw
+      b = b - learning_rate * db
+
+      if i % 100 == 0:
+        costs.append(cost)
+        
+
+      if print_cost and i % 100 == 0:
+        print ("Cost after iteration %i: %f" %(i, cost))
+    
+    params = {"w": w,
+              "b": b}
+    
+    grads = {"dw": dw,
+             "db": db}
+    
+    return params, grads, costs
+
+  
