@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from itertools import combinations
+import pickle
 
 class HWDigitRecognizer:
 
@@ -77,12 +78,10 @@ class HWDigitRecognizer:
     print(pairs.shape)
     # print(np.array(self.get_pairs()).shape[0])
     
-
+    dict_params = {}
     
 
-    for i in range(pairs.shape[0]):
-      w, b = self.initialize_params(n)
-      parameters, grads, costs = None, None, None
+    for i in range(pairs.shape[0]):      
       Y_tmp = self.Y_train[0]
       for j in range(len(Y_tmp)):
         if(pairs[i, 0] == Y_tmp[j]):
@@ -90,23 +89,29 @@ class HWDigitRecognizer:
         elif(pairs[i, 1] == Y_tmp[j]):
           Y_tmp[j] = 1
         else:
-          Y_tmp[j] = np.random.randint(0,1)
-        
-        parameters, grads, costs = self.optimize(w, b, self.X_train, Y_tmp, 1000, 0.5, False)
-      
-      print(parameters)
-      print(i)
-      print('---')
+          Y_tmp[j] = np.random.randint(2)
 
+      w, b = self.initialize_params(n)
+      parameters, grads, costs = None, None, None  
+      parameters, grads, costs = self.optimize(w, b, self.X_train, Y_tmp, 10000, 0.5, False)
+      dict_params[frozenset(pairs[i])] = (parameters["w"], parameters["b"], costs)
+      # print(parameters)
+      print(i)
+      # print(pairs[i])
+      print('---')
+    print(dict_params)
     # Gradient descent (≈ 1 line of code)
     
-    
+    filename = 'params.dict'
+    outfile = open(filename, 'wb')
+    pickle.dump(dict_params, outfile)
+    outfile.close()
     # Retrieve parameters w and b from dictionary "parameters"
-    w = parameters["w"]
-    b = parameters["b"]
+    # w = parameters["w"]
+    # b = parameters["b"]
 
     
-    return((grads, costs))
+    return(dict_params)
     # Predict test/train set examples (≈ 2 lines of code)
     # Y_prediction_test = predict(w, b, X_test)
     # Y_prediction_train = predict(w, b, X_train)
@@ -165,6 +170,8 @@ class HWDigitRecognizer:
     np.random.seed(1)
     w = np.random.rand(dim,1) * 0.01
     b = np.random.randint(100) * 0.0001
+    # w = np.zeros((dim, 1))
+    # b = 0.0
 
     assert(w.shape == (dim, 1))
     assert(isinstance(b, float) or isinstance(b, int))
