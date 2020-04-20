@@ -96,10 +96,10 @@ class HWDigitRecognizer:
       parameters, grads, costs = self.optimize(w, b, self.X_train, Y_tmp, 10000, 0.5, False)
       dict_params[frozenset(pairs[i])] = (parameters["w"], parameters["b"], costs)
       # print(parameters)
-      print(i)
+      # print(i)
       # print(pairs[i])
-      print('---')
-    print(dict_params)
+      # print('---')
+    # print(dict_params)
     # Gradient descent (≈ 1 line of code)
     
     filename = 'params.dict'
@@ -111,7 +111,17 @@ class HWDigitRecognizer:
     # b = parameters["b"]
 
     
-    return(dict_params)
+    test = self.predict(self.X_test, dict_params, self.get_pairs())
+    count = 0
+    q = len(test)
+    r = self.Y_test
+    for i in range(q):
+      if test[i] == r[0, i]:
+        count += 1
+    c = count/q
+    print(c)
+
+
     # Predict test/train set examples (≈ 2 lines of code)
     # Y_prediction_test = predict(w, b, X_test)
     # Y_prediction_train = predict(w, b, X_train)
@@ -136,7 +146,47 @@ class HWDigitRecognizer:
 
     Se asume un umbral de 0.5 para la predicción.
     """
-    return 'null'
+    numero = [0,0,0,0,0,0,0,0,0,0]
+    predictions = []
+    def local_predict(w_n,b_n,X_n):
+      m = X_n.shape[1]
+      Y_prediction = np.zeros((1,m))
+      w_n = w_n.reshape(X_n.shape[0], 1)
+    
+      A = self.sigmoid(w_n.T.dot(X_n) + b_n)
+    
+      for i in range(A.shape[1]):
+        Y_prediction[0,i] = 0 if (A[0,i] <= 0.5) else 1
+    
+      assert(Y_prediction.shape == (1, m))
+      return Y_prediction
+
+    for i in range (len(class_pairs)):
+      params_local = params[frozenset(class_pairs[i])]
+      w = params_local[0]
+      b = params_local[1]
+      
+      prediction = local_predict(w, b, X)
+      predictions.append(prediction)
+
+    predictions = np.array(predictions)
+    predictions = predictions.T
+
+    arr = []
+    np.random.seed(1)
+    for i in range(predictions.shape[0]):
+      nm = [0,0,0,0,0,0,0,0,0,0]
+      for k in range(predictions.shape[2]):
+        l = predictions[i, 0, k]
+        tmp_l = int(l)
+        nm[class_pairs[k][tmp_l]] += 1
+      max_value = self.get_max(nm)
+      if len(max_value) > 1:
+        arr.append(max_value[np.random.randint(len(max_value))])
+      else:
+        arr.append(max_value[0])
+
+    return arr
 
   def get_datasets(self):
     """Retorna un diccionario con los datasets preprocesados con los datos y 
@@ -167,11 +217,11 @@ class HWDigitRecognizer:
     return s
 
   def initialize_params(self,dim):
-    np.random.seed(1)
-    w = np.random.rand(dim,1) * 0.01
-    b = np.random.randint(100) * 0.0001
-    # w = np.zeros((dim, 1))
-    # b = 0.0
+    #np.random.seed(1)
+    #w = np.random.rand(dim,1) * 0.01
+    #b = np.random.randint(100) * 0.0001
+    w = np.zeros((dim, 1))
+    b = 0.0
 
     assert(w.shape == (dim, 1))
     assert(isinstance(b, float) or isinstance(b, int))
@@ -229,3 +279,9 @@ class HWDigitRecognizer:
     return params, grads, costs
 
   
+  def get_max(self, a):
+    max_value = max(a)
+    if a.count(max_value) > 1:
+      return [i for i, x in enumerate(a) if x == max(a)]
+    else:
+      return [a.index(max(a))]
