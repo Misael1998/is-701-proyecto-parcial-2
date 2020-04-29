@@ -79,21 +79,32 @@ class HWDigitRecognizer:
     # print(np.array(self.get_pairs()).shape[0])
     
     dict_params = {}
-    
+
 
     for i in range(pairs.shape[0]):      
       Y_tmp = self.Y_train[0]
+      X_tmp = self.X_train
+      
+      Y_tmp = Y_tmp.T
+      X_tmp = X_tmp.T
+
+      Y_tmp_train = []
+      X_tmp_train = []
       for j in range(len(Y_tmp)):
         if(pairs[i, 0] == Y_tmp[j]):
-          Y_tmp[j] = 0
+          Y_tmp_train.append(0)
+          X_tmp_train.append(X_tmp[j])
         elif(pairs[i, 1] == Y_tmp[j]):
-          Y_tmp[j] = 1
-        else:
-          Y_tmp[j] = np.random.randint(2)
+          Y_tmp_train.append(1)
+          X_tmp_train.append(X_tmp[j])
+
+      Y_tmp_train = np.array(Y_tmp_train)
+      X_tmp_train = np.array(X_tmp_train).T
+
 
       w, b = self.initialize_params(n)
       parameters, grads, costs = None, None, None  
-      parameters, grads, costs = self.optimize(w, b, self.X_train, Y_tmp, 10000, 0.5, False)
+      parameters, grads, costs = self.optimize(w, b, X_tmp_train, Y_tmp_train, 3000, 0.5, False)
       dict_params[frozenset(pairs[i])] = (parameters["w"], parameters["b"], costs)
       # print(parameters)
       # print(i)
@@ -146,7 +157,6 @@ class HWDigitRecognizer:
 
     Se asume un umbral de 0.5 para la predicción.
     """
-    numero = [0,0,0,0,0,0,0,0,0,0]
     predictions = []
     def local_predict(w_n,b_n,X_n):
       m = X_n.shape[1]
@@ -272,7 +282,7 @@ class HWDigitRecognizer:
     
     params = {"w": w,
               "b": b}
-    
+
     grads = {"dw": dw,
              "db": db}
     
