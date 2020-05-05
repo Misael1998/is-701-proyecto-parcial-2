@@ -75,11 +75,11 @@ class HWDigitRecognizer:
     # initialize parameters with zeros (≈ 1 line of code)
     n = self.X_train.shape[0]
     pairs = np.asarray(self.get_pairs())
-    print(pairs.shape)
     # print(np.array(self.get_pairs()).shape[0])
+    learn_rate = 0.5
+    num_iterations = 3000
     
     dict_params = {}
-
 
     for i in range(pairs.shape[0]):      
       Y_tmp = self.Y_train[0]
@@ -101,36 +101,32 @@ class HWDigitRecognizer:
       Y_tmp_train = np.array(Y_tmp_train)
       X_tmp_train = np.array(X_tmp_train).T
 
-
       w, b = self.initialize_params(n)
-      parameters, grads, costs = None, None, None  
-      parameters, grads, costs = self.optimize(w, b, X_tmp_train, Y_tmp_train, 3000, 0.5, False)
+      parameters, grads, costs = self.optimize(w, b, X_tmp_train, Y_tmp_train, num_iterations, learn_rate, False)
       dict_params[frozenset(pairs[i])] = (parameters["w"], parameters["b"], costs)
-      # print(parameters)
-      # print(i)
-      # print(pairs[i])
-      # print('---')
-    # print(dict_params)
-    # Gradient descent (≈ 1 line of code)
+
+    dict_params["learning_rate"] = learn_rate
+    dict_params["num_iterations"] = num_iterations
     
-    filename = 'params.dict'
-    outfile = open(filename, 'wb')
-    pickle.dump(dict_params, outfile)
-    outfile.close()
+    # filename = 'params.dict'
+    # outfile = open(filename, 'wb')
+    # pickle.dump(dict_params, outfile)
+    # outfile.close()
     # Retrieve parameters w and b from dictionary "parameters"
     # w = parameters["w"]
     # b = parameters["b"]
 
     
-    test = self.predict(self.X_test, dict_params, self.get_pairs())
-    count = 0
-    q = len(test)
-    r = self.Y_test
-    for i in range(q):
-      if test[i] == r[0, i]:
-        count += 1
-    c = count/q
-    print(c)
+    # test = self.predict(self.X_test, dict_params, self.get_pairs())
+    # count = 0
+    # q = len(test)
+    # r = self.Y_test
+    # for i in range(q):
+    #   if test[i] == r[0, i]:
+    #     count += 1
+    # c = count/q
+    # print(c)
+    return dict_params
 
 
     # Predict test/train set examples (≈ 2 lines of code)
@@ -177,7 +173,7 @@ class HWDigitRecognizer:
       b = params_local[1]
       
       prediction = local_predict(w, b, X)
-      predictions.append(prediction)
+      predictions.append(prediction[0])
 
     predictions = np.array(predictions)
     predictions = predictions.T
@@ -186,8 +182,8 @@ class HWDigitRecognizer:
     np.random.seed(1)
     for i in range(predictions.shape[0]):
       nm = [0,0,0,0,0,0,0,0,0,0]
-      for k in range(predictions.shape[2]):
-        l = predictions[i, 0, k]
+      for k in range(predictions.shape[1]):
+        l = predictions[i, k]
         tmp_l = int(l)
         nm[class_pairs[k][tmp_l]] += 1
       max_value = self.get_max(nm)
@@ -196,7 +192,9 @@ class HWDigitRecognizer:
       else:
         arr.append(max_value[0])
 
-    return arr
+    tmo = np.asanyarray(arr)
+    tmo = tmo.reshape(1,tmo.shape[0])
+    return tmo
 
   def get_datasets(self):
     """Retorna un diccionario con los datasets preprocesados con los datos y 
